@@ -2,7 +2,6 @@ import os
 import pickle
 from pathlib import Path
 import yfinance as yf
-from langchain_ollama import OllamaLLM
 from langchain_core.prompts import PromptTemplate
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -12,7 +11,37 @@ from datetime import datetime, timedelta, date
 import time
 import requests
 
-llm = OllamaLLM(model="qwen3.5:4b", temperature=0.3)
+# ── LLM Backend Configuration ─────────────────────────────────────────────────
+# RUNTIME: "ollama" | "vllm" | "tensorrt"
+#   ollama    — local Ollama server (CPU or GPU); model pulled via `ollama pull`
+#   vllm      — vLLM OpenAI-compatible server (NVIDIA/AMD GPU)
+#   tensorrt  — TensorRT-LLM server, also OpenAI-compatible (NVIDIA only)
+#
+# HF_MODEL is used by vllm and tensorrt; it must be a HuggingFace model ID.
+#   vLLM/TRT download models to the HF cache (~/.cache/huggingface/hub/)
+#   automatically — no separate download step needed beyond `uv sync`.
+#
+# OLLAMA_MODEL is only used when RUNTIME="ollama".
+# ──────────────────────────────────────────────────────────────────────────────
+RUNTIME      = "ollama"                      # switch runtime here
+HF_MODEL     = "Qwen/Qwen3.5-4B"            # used by vllm / tensorrt
+OLLAMA_MODEL = "qwen3.5:4b"                 # used by ollama
+API_BASE_URL = "http://localhost:8000/v1"   # vLLM or TRT server endpoint
+TEMPERATURE  = 0.3
+
+if RUNTIME == "ollama":
+    from langchain_ollama import OllamaLLM
+    llm = OllamaLLM(model=OLLAMA_MODEL, temperature=TEMPERATURE)
+elif RUNTIME in ("vllm", "tensorrt"):
+    from langchain_openai import ChatOpenAI
+    llm = ChatOpenAI(
+        model=HF_MODEL,
+        base_url=API_BASE_URL,
+        api_key="none",          # vLLM/TRT don't require a real key
+        temperature=TEMPERATURE,
+    )
+else:
+    raise ValueError(f"Unknown RUNTIME: {RUNTIME!r}. Choose 'ollama', 'vllm', or 'tensorrt'.")
 
 # Stock data cache — keyed by (symbol, start_date, end_date)
 # Historical ranges (end < today) are immutable, so we cache them indefinitely.
