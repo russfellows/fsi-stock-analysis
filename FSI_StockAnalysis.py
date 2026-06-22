@@ -533,9 +533,97 @@ def create_interface():
     }
     
     .gr-box {border-radius: 15px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);}
+
+    /* Force tab navigation to be visible */
+    .gradio-tabs .tab-nav,
+    .gradio-tabs > div:first-child {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        background: #f8f9fa !important;
+        padding: 12px !important;
+        border-radius: 8px !important;
+        margin-bottom: 10px !important;
+        gap: 8px !important;
+        border: 1px solid #e0e0e0 !important;
+        min-height: 50px !important;
+    }
+    .gradio-tabs .tab-nav button,
+    .gradio-tabs > div:first-child > button {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        flex: 1 !important;
+        min-width: 150px !important;
+        max-width: 200px !important;
+        height: auto !important;
+        padding: 8px 12px !important;
+        background: white !important;
+        border: 2px solid #e0e0e0 !important;
+        border-radius: 6px !important;
+        color: #333 !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
+        text-align: center !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+    }
+    .gradio-tabs .tab-nav button:hover,
+    .gradio-tabs > div:first-child > button:hover {
+        border-color: #00C2DE !important;
+        background: rgba(0, 194, 222, 0.1) !important;
+        color: #00C2DE !important;
+    }
+    .gradio-tabs .tab-nav button.selected,
+    .gradio-tabs > div:first-child > button.selected,
+    .gradio-tabs .tab-nav button[aria-selected="true"],
+    .gradio-tabs > div:first-child > button[aria-selected="true"] {
+        background: #00C2DE !important;
+        border-color: #00C2DE !important;
+        color: white !important;
+    }
+    .gradio-tabs button[aria-label*="More"],
+    .gradio-tabs .tab-nav-button {
+        display: none !important;
+    }
+    .gradio-tabs > div:nth-child(2) {
+        background: transparent !important;
+        border: none !important;
+        margin-top: 10px !important;
+    }
     """
-    
-    with gr.Blocks(title="AMD Instinct MI3xx ROCm-Powered Financial Analysis Demo", theme=gr.themes.Soft(), css=custom_css) as interface:
+
+    _js = """
+    function ensureTabsVisible() {
+        const tabContainers = document.querySelectorAll('.gradio-tabs');
+        tabContainers.forEach(container => {
+            const tabNav = container.querySelector('div:first-child');
+            if (tabNav) {
+                tabNav.style.display = 'flex';
+                tabNav.style.flexWrap = 'nowrap';
+                tabNav.style.gap = '8px';
+                tabNav.style.width = '100%';
+                const buttons = tabNav.querySelectorAll('button');
+                buttons.forEach(btn => {
+                    if (!btn.textContent.includes('...') && btn.textContent.trim() !== '') {
+                        btn.style.display = 'block';
+                        btn.style.visibility = 'visible';
+                        btn.style.flex = '1';
+                    } else {
+                        btn.style.display = 'none';
+                    }
+                });
+            }
+        });
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(ensureTabsVisible, 500);
+        setTimeout(ensureTabsVisible, 1500);
+    });
+    """
+
+    with gr.Blocks(title="AMD Instinct MI3xx ROCm-Powered Financial Analysis Demo") as interface:
         # Header with AMD logo in top right corner
         gr.HTML("""
             <div style="position: relative; padding: 20px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 10px; margin-bottom: 20px;">
@@ -629,117 +717,6 @@ def create_interface():
                     token_count_output = gr.Textbox(label="Token Count", interactive=False, scale=1)
                     data_points_output = gr.Textbox(label="Data Points Analyzed", interactive=False, scale=1)
         
-        # Add JavaScript for horizontal tabs
-        gr.HTML("""
-        <script>
-        function ensureTabsVisible() {
-            // Find all tab containers
-            const tabContainers = document.querySelectorAll('.gradio-tabs');
-            tabContainers.forEach(container => {
-                // Find the tab navigation area
-                const tabNav = container.querySelector('div:first-child');
-                if (tabNav) {
-                    // Simple flex layout
-                    tabNav.style.display = 'flex';
-                    tabNav.style.flexWrap = 'nowrap';
-                    tabNav.style.gap = '8px';
-                    tabNav.style.width = '100%';
-                    
-                    // Make all buttons visible
-                    const buttons = tabNav.querySelectorAll('button');
-                    buttons.forEach(btn => {
-                        if (!btn.textContent.includes('...') && btn.textContent.trim() !== '') {
-                            btn.style.display = 'block';
-                            btn.style.visibility = 'visible';
-                            btn.style.flex = '1';
-                        } else {
-                            btn.style.display = 'none';
-                        }
-                    });
-                }
-            });
-        }
-        
-        // Run after DOM is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(ensureTabsVisible, 500);
-            setTimeout(ensureTabsVisible, 1500);
-        });
-        </script>
-        """)
-        
-        # Add additional CSS to ensure tabs display properly
-        gr.HTML("""
-        <style>
-        /* Force tab navigation to be visible */
-        .gradio-tabs .tab-nav,
-        .gradio-tabs > div:first-child {
-            display: flex !important;
-            flex-direction: row !important;
-            flex-wrap: nowrap !important;
-            overflow-x: auto !important;
-            background: #f8f9fa !important;
-            padding: 12px !important;
-            border-radius: 8px !important;
-            margin-bottom: 10px !important;
-            gap: 8px !important;
-            border: 1px solid #e0e0e0 !important;
-            min-height: 50px !important;
-        }
-        
-        /* Make tab buttons clearly visible */
-        .gradio-tabs .tab-nav button,
-        .gradio-tabs > div:first-child > button {
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            flex: 1 !important;
-            min-width: 150px !important;
-            max-width: 200px !important;
-            height: auto !important;
-            padding: 8px 12px !important;
-            background: white !important;
-            border: 2px solid #e0e0e0 !important;
-            border-radius: 6px !important;
-            color: #333 !important;
-            font-weight: 600 !important;
-            font-size: 13px !important;
-            text-align: center !important;
-            cursor: pointer !important;
-            transition: all 0.2s ease !important;
-        }
-        
-        /* Tab button hover and active states */
-        .gradio-tabs .tab-nav button:hover,
-        .gradio-tabs > div:first-child > button:hover {
-            border-color: #00C2DE !important;
-            background: rgba(0, 194, 222, 0.1) !important;
-            color: #00C2DE !important;
-        }
-        
-        .gradio-tabs .tab-nav button.selected,
-        .gradio-tabs > div:first-child > button.selected,
-        .gradio-tabs .tab-nav button[aria-selected="true"],
-        .gradio-tabs > div:first-child > button[aria-selected="true"] {
-            background: #00C2DE !important;
-            border-color: #00C2DE !important;
-            color: white !important;
-        }
-        
-        /* Hide dropdown buttons completely */
-        .gradio-tabs button[aria-label*="More"],
-        .gradio-tabs .tab-nav-button {
-            display: none !important;
-        }
-        
-        /* Ensure tab content area has proper styling */
-        .gradio-tabs > div:nth-child(2) {
-            background: transparent !important;
-            border: none !important;
-            margin-top: 10px !important;
-        }
-        </style>
-        """)
         
         # Event handlers
         analyze_btn.click(
@@ -768,9 +745,9 @@ def create_interface():
             This tool is for educational purposes only. Always conduct your own research and consult with a financial advisor before making investment decisions.
         """)
     
-    return interface
+    return interface, custom_css, _js
 
-iface = create_interface()
+iface, _css, _js = create_interface()
 
 if __name__ == "__main__":
-    iface.launch(server_name="0.0.0.0")
+    iface.launch(server_name="0.0.0.0", theme=gr.themes.Soft(), css=_css, js=_js)
