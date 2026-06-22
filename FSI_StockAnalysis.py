@@ -1,7 +1,6 @@
 import yfinance as yf
-from langchain_community.llms import Ollama
-from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
+from langchain_ollama import OllamaLLM
+from langchain_core.prompts import PromptTemplate
 import pandas as pd
 import matplotlib.pyplot as plt
 import gradio as gr
@@ -11,7 +10,7 @@ import time
 import requests
 
 # Initialize Ollama with Llama3.1 - increased temperature for more varied responses
-llm = Ollama(model="llama3.1:8b", temperature=0.3)
+llm = OllamaLLM(model="llama3.1:8b", temperature=0.3)
 
 # Updated prompt template focused on comprehensive AI analysis
 stock_analysis_prompt = PromptTemplate(
@@ -114,8 +113,7 @@ Analysis:
 """
 )
 
-# Create an LLMChain for stock analysis
-stock_analysis_chain = LLMChain(llm=llm, prompt=stock_analysis_prompt, verbose=True)
+stock_analysis_chain = stock_analysis_prompt | llm
 
 def get_stock_data(symbol, start_date, end_date):
     try:
@@ -322,20 +320,20 @@ def analyze_stock(symbol, start_date, end_date, investor_type):
         news_headlines = get_market_context(symbol)
 
     start_time = time.time()
-    analysis = stock_analysis_chain.run(
-        stock_data=data_summary,
-        stock_symbol=symbol,
-        start_date=start_date,
-        end_date=end_date,
-        start_price=f"{start_price:.2f}",
-        end_price=f"{end_price:.2f}",
-        sma=f"{indicators['sma']:.2f}" if indicators['sma'] is not None else "N/A",
-        rsi=f"{indicators['rsi']:.2f}" if indicators['rsi'] is not None else "N/A",
-        momentum=f"{indicators['momentum']:.2f}",
-        price_vs_sma=indicators['price_vs_sma'],
-        news_headlines=news_headlines,
-        investor_type=investor_type
-    )
+    analysis = stock_analysis_chain.invoke({
+        "stock_data": data_summary,
+        "stock_symbol": symbol,
+        "start_date": start_date,
+        "end_date": end_date,
+        "start_price": f"{start_price:.2f}",
+        "end_price": f"{end_price:.2f}",
+        "sma": f"{indicators['sma']:.2f}" if indicators['sma'] is not None else "N/A",
+        "rsi": f"{indicators['rsi']:.2f}" if indicators['rsi'] is not None else "N/A",
+        "momentum": f"{indicators['momentum']:.2f}",
+        "price_vs_sma": indicators['price_vs_sma'],
+        "news_headlines": news_headlines,
+        "investor_type": investor_type,
+    })
     end_time = time.time()
     inference_time = end_time - start_time
     recommendation = extract_recommendation(analysis)

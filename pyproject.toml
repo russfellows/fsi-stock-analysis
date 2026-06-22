@@ -29,10 +29,6 @@ dependencies = [
     "ollama",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [tool.uv]
 # Install project env:  uv sync
 # Run directly:         uv run FSI_StockAnalysis.py
