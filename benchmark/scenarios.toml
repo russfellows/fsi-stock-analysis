@@ -1,0 +1,36 @@
+# Benchmark scenarios — fixed, deterministic inputs
+
+[suite]
+name = "standard"
+description = "Standard FSI benchmark suite"
+warmup_runs = 1
+timed_runs = 3
+concurrency_levels = [1, 4, 8]
+
+[[scenarios]]
+name = "aapl_moderate"
+symbol = "AAPL"
+start_date = "2024-01-02"
+end_date = "2024-06-28"
+investor_type = "Moderate"
+
+[[scenarios]]
+name = "tsla_aggressive"
+symbol = "TSLA"
+start_date = "2024-01-02"
+end_date = "2024-06-28"
+investor_type = "Aggressive"
+
+[[scenarios]]
+name = "msft_conservative"
+symbol = "MSFT"
+start_date = "2024-01-02"
+end_date = "2024-06-28"
+investor_type = "Conservative"
+
+[[scenarios]]
+name = "nvda_day_trader"
+symbol = "NVDA"
+start_date = "2024-01-02"
+end_date = "2024-06-28"
+investor_type = "Day Trader"

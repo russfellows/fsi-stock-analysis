@@ -28,6 +28,9 @@ dependencies = [
     "scikit-learn",
     # Ollama client
     "ollama",
+    # Benchmark tooling
+    "rich",
+    "aiohttp",
 ]
 
 [tool.uv]

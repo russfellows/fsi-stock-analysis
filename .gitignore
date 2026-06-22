@@ -55,3 +55,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Benchmark results
+benchmark/results/
