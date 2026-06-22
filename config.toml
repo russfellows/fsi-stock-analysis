@@ -1,0 +1,45 @@
+# FSI Stock Analysis — Runtime Configuration
+# Edit this file to switch inference backends, models, and app settings.
+# No Python changes required.
+
+[llm]
+# Which inference runtime to use.
+# Options: "ollama" | "vllm" | "tensorrt"
+runtime = "ollama"
+
+# HuggingFace model ID — used by vllm and tensorrt.
+# vLLM/TRT-LLM download models to ~/.cache/huggingface/hub/ on first run.
+# Ignored when runtime = "ollama".
+hf_model = "Qwen/Qwen3.5-4B"
+
+# Ollama model tag — used only when runtime = "ollama".
+# Pull with: ollama pull <tag>
+ollama_model = "qwen3.5:4b"
+
+# API endpoint for vllm and tensorrt (OpenAI-compatible).
+# Ignored when runtime = "ollama".
+api_base_url = "http://localhost:8000/v1"
+
+# Sampling temperature — lower = more deterministic.
+temperature = 0.3
+
+# Max tokens to generate per response.
+max_tokens = 2048
+
+[app]
+# Network interface to bind the Gradio server to.
+# "0.0.0.0" = all interfaces (accessible on LAN)
+# "127.0.0.1" = localhost only
+host = "0.0.0.0"
+
+# Port for the Gradio web interface.
+port = 7860
+
+# Default date range shown in the UI on first load.
+default_start_date = "2024-08-13"
+default_end_date   = "2025-08-13"
+
+[cache]
+# Directory for cached stock price data.
+# Supports ~ expansion. Relative paths are resolved from the project root.
+stock_data_dir = "~/.cache/fsi-stock-analysis/stock_data"

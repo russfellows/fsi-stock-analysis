@@ -1,5 +1,6 @@
 import os
 import pickle
+import tomllib
 from pathlib import Path
 import yfinance as yf
 from langchain_core.prompts import PromptTemplate
@@ -11,23 +12,22 @@ from datetime import datetime, timedelta, date
 import time
 import requests
 
-# ── LLM Backend Configuration ─────────────────────────────────────────────────
-# RUNTIME: "ollama" | "vllm" | "tensorrt"
-#   ollama    — local Ollama server (CPU or GPU); model pulled via `ollama pull`
-#   vllm      — vLLM OpenAI-compatible server (NVIDIA/AMD GPU)
-#   tensorrt  — TensorRT-LLM server, also OpenAI-compatible (NVIDIA only)
-#
-# HF_MODEL is used by vllm and tensorrt; it must be a HuggingFace model ID.
-#   vLLM/TRT download models to the HF cache (~/.cache/huggingface/hub/)
-#   automatically — no separate download step needed beyond `uv sync`.
-#
-# OLLAMA_MODEL is only used when RUNTIME="ollama".
+# ── Load config.toml ──────────────────────────────────────────────────────────
+_CONFIG_PATH = Path(__file__).parent / "config.toml"
+with open(_CONFIG_PATH, "rb") as _f:
+    _cfg = tomllib.load(_f)
+
+_llm_cfg = _cfg["llm"]
+_app_cfg  = _cfg["app"]
+_cch_cfg  = _cfg["cache"]
+
+RUNTIME      = _llm_cfg["runtime"]
+HF_MODEL     = _llm_cfg["hf_model"]
+OLLAMA_MODEL = _llm_cfg["ollama_model"]
+API_BASE_URL = _llm_cfg["api_base_url"]
+TEMPERATURE  = _llm_cfg["temperature"]
+MAX_TOKENS   = _llm_cfg["max_tokens"]
 # ──────────────────────────────────────────────────────────────────────────────
-RUNTIME      = "ollama"                      # switch runtime here
-HF_MODEL     = "Qwen/Qwen3.5-4B"            # used by vllm / tensorrt
-OLLAMA_MODEL = "qwen3.5:4b"                 # used by ollama
-API_BASE_URL = "http://localhost:8000/v1"   # vLLM or TRT server endpoint
-TEMPERATURE  = 0.3
 
 if RUNTIME == "ollama":
     from langchain_ollama import OllamaLLM
@@ -37,8 +37,9 @@ elif RUNTIME in ("vllm", "tensorrt"):
     llm = ChatOpenAI(
         model=HF_MODEL,
         base_url=API_BASE_URL,
-        api_key="none",          # vLLM/TRT don't require a real key
+        api_key="none",
         temperature=TEMPERATURE,
+        max_tokens=MAX_TOKENS,
     )
 else:
     raise ValueError(f"Unknown RUNTIME: {RUNTIME!r}. Choose 'ollama', 'vllm', or 'tensorrt'.")
@@ -46,7 +47,7 @@ else:
 # Stock data cache — keyed by (symbol, start_date, end_date)
 # Historical ranges (end < today) are immutable, so we cache them indefinitely.
 # Ranges ending today or later are not cached to avoid stale intraday data.
-_STOCK_CACHE_DIR = Path.home() / ".cache" / "fsi-stock-analysis" / "stock_data"
+_STOCK_CACHE_DIR = Path(_cch_cfg["stock_data_dir"]).expanduser()
 _STOCK_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 # Updated prompt template focused on comprehensive AI analysis
@@ -694,7 +695,7 @@ def create_interface():
                     with gr.Column():
                         start_date_input = gr.Textbox(
                             label="Start Date (YYYY-MM-DD)",
-                            value="2024-08-13",
+                            value=_app_cfg["default_start_date"],
                             placeholder="2024-01-01",
                             info="Enter start date in YYYY-MM-DD format"
                         )
@@ -702,7 +703,7 @@ def create_interface():
                     with gr.Column():
                         end_date_input = gr.Textbox(
                             label="End Date (YYYY-MM-DD)",
-                            value="2025-08-13",
+                            value=_app_cfg["default_end_date"],
                             placeholder="2025-01-01",
                             info="Enter end date in YYYY-MM-DD format"
                         )
@@ -779,4 +780,10 @@ def create_interface():
 iface, _css, _js = create_interface()
 
 if __name__ == "__main__":
-    iface.launch(server_name="0.0.0.0", theme=gr.themes.Soft(), css=_css, js=_js)
+    iface.launch(
+        server_name=_app_cfg["host"],
+        server_port=_app_cfg["port"],
+        theme=gr.themes.Soft(),
+        css=_css,
+        js=_js,
+    )
