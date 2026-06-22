@@ -1,3 +1,6 @@
+import os
+import pickle
+from pathlib import Path
 import yfinance as yf
 from langchain_ollama import OllamaLLM
 from langchain_core.prompts import PromptTemplate
@@ -5,11 +8,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import gradio as gr
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import time
 import requests
 
-llm = OllamaLLM(model="qwen3:4b", temperature=0.3)
+llm = OllamaLLM(model="qwen3.5:4b", temperature=0.3)
+
+# Stock data cache — keyed by (symbol, start_date, end_date)
+# Historical ranges (end < today) are immutable, so we cache them indefinitely.
+# Ranges ending today or later are not cached to avoid stale intraday data.
+_STOCK_CACHE_DIR = Path.home() / ".cache" / "fsi-stock-analysis" / "stock_data"
+_STOCK_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 # Updated prompt template focused on comprehensive AI analysis
 stock_analysis_prompt = PromptTemplate(
@@ -115,6 +124,14 @@ Analysis:
 stock_analysis_chain = stock_analysis_prompt | llm
 
 def get_stock_data(symbol, start_date, end_date):
+    end_dt = datetime.strptime(end_date, "%Y-%m-%d").date()
+    is_historical = end_dt < date.today()
+    cache_file = _STOCK_CACHE_DIR / f"{symbol}_{start_date}_{end_date}.pkl"
+
+    if is_historical and cache_file.exists():
+        with open(cache_file, "rb") as f:
+            return pickle.load(f)
+
     try:
         start = datetime.strptime(start_date, "%Y-%m-%d")
         end = datetime.strptime(end_date, "%Y-%m-%d")
@@ -122,8 +139,11 @@ def get_stock_data(symbol, start_date, end_date):
         stock = yf.Ticker(symbol)
         data = stock.history(start=start, end=end_adjusted)
         data = data.loc[start_date:end_date]
+        if is_historical and not data.empty:
+            with open(cache_file, "wb") as f:
+                pickle.dump(data, f)
         return data
-    except Exception as e:
+    except Exception:
         return pd.DataFrame()
 
 def get_technical_indicators(data):
