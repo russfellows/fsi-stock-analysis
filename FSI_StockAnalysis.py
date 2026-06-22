@@ -9,8 +9,7 @@ from datetime import datetime, timedelta
 import time
 import requests
 
-# Initialize Ollama with Llama3.1 - increased temperature for more varied responses
-llm = OllamaLLM(model="llama3.1:8b", temperature=0.3)
+llm = OllamaLLM(model="qwen3:4b", temperature=0.3)
 
 # Updated prompt template focused on comprehensive AI analysis
 stock_analysis_prompt = PromptTemplate(
