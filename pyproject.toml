@@ -1,0 +1,38 @@
+[project]
+name = "fsi-stock-analysis"
+version = "0.1.0"
+description = "AI-powered stock analysis with technical indicators and LLM insights"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    # Financial data
+    "yfinance",
+    "pandas",
+    "numpy",
+    "scipy",
+    # LangChain stack
+    "langchain",
+    "langchain-community",
+    "langchain-core",
+    "langchain-ollama",
+    # Visualization and UI
+    "gradio",
+    "matplotlib",
+    "plotly",
+    # HTTP and utilities
+    "requests",
+    "python-dateutil",
+    # ML
+    "torch",
+    "scikit-learn",
+    # Ollama client
+    "ollama",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+# Install project env:  uv sync
+# Run directly:         uv run FSI_StockAnalysis.py

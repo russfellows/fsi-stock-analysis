@@ -1,3 +1,5 @@
+# Superseded by pyproject.toml — kept for non-uv compatibility only
+# Preferred: uv sync
 yfinance
 langchain
 langchain-community
