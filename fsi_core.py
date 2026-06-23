@@ -6,7 +6,6 @@ benchmark runner can import the same LLM chain, data fetchers, and
 prompt helpers without duplicating code.
 """
 
-import os
 import pickle
 import tomllib
 from pathlib import Path
@@ -265,9 +264,9 @@ def get_news_headlines(symbol, max_headlines=5):
             print(f"Fallback info failed: {e}")
             headlines = [
                 f"- No recent news headlines available for {symbol}",
-                f"- Consider checking financial news websites for latest updates",
-                f"- Market analysis based on technical indicators recommended",
-                f"- General market conditions may affect stock performance"
+                "- Consider checking financial news websites for latest updates",
+                "- Market analysis based on technical indicators recommended",
+                "- General market conditions may affect stock performance"
             ]
 
     return '\n'.join(headlines[:max_headlines])

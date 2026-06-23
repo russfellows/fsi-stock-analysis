@@ -1,6 +1,6 @@
 [project]
 name = "fsi-stock-analysis"
-version = "0.1.0"
+version = "0.1.2"
 description = "AI-powered stock analysis with technical indicators and LLM insights"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -31,6 +31,7 @@ dependencies = [
     # Benchmark tooling
     "rich",
     "aiohttp",
+    "polars",
 ]
 
 [tool.uv]

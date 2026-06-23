@@ -12,7 +12,6 @@ import argparse
 import csv
 import json
 import sys
-from pathlib import Path
 
 
 def load_result(path: str) -> dict:
@@ -92,7 +91,7 @@ def print_rich_tables(results: list[dict], levels: list[str]):
         print("ERROR: 'rich' is not installed. Run: uv add rich", file=sys.stderr)
         sys.exit(1)
 
-    console = Console(highlight=False)
+    console = Console(highlight=False, width=200)
 
     def hl(val_str: str, is_best: bool) -> str:
         return f"[bold green]{val_str}[/]" if is_best else val_str
@@ -107,35 +106,25 @@ def print_rich_tables(results: list[dict], levels: list[str]):
 
         console.rule(f"[bold cyan]Concurrency = {level}[/]")
 
-        # Table 1 — run identity (ref number ties both tables together)
-        id_table = Table(box=box.SIMPLE_HEAVY, header_style="bold cyan", pad_edge=False)
-        id_table.add_column("#",         justify="right", style="dim", no_wrap=True)
-        id_table.add_column("Run ID",    no_wrap=True,    style="dim")
-        id_table.add_column("Timestamp", no_wrap=True)
-        id_table.add_column("Runtime",   style="bold",    no_wrap=True)
-        id_table.add_column("Model",     no_wrap=True)
+        table = Table(box=box.SIMPLE_HEAVY, header_style="bold cyan", pad_edge=False)
+        table.add_column("Run ID",        no_wrap=True,    style="dim")
+        table.add_column("Timestamp",     no_wrap=True)
+        table.add_column("Runtime",       style="bold",    no_wrap=True)
+        table.add_column("Model",         no_wrap=True)
+        table.add_column("Concurrency",   justify="right", no_wrap=True)
+        table.add_column("Mean Lat (s)",  justify="right", no_wrap=True)
+        table.add_column("P95 Lat (s)",   justify="right", no_wrap=True)
+        table.add_column("Mean TPS",      justify="right", no_wrap=True)
+        table.add_column("Agg TPS",       justify="right", no_wrap=True)
+        table.add_column("Tokens",        justify="right", no_wrap=True)
+        table.add_column("Wall (s)",      justify="right", no_wrap=True)
         for idx, row in enumerate(rows):
-            id_table.add_row(
-                str(idx + 1),
+            table.add_row(
                 row["run_id"],
                 row["timestamp"],
                 row["runtime"],
                 row["model"],
-            )
-        console.print(id_table)
-
-        # Table 2 — performance metrics
-        perf_table = Table(box=box.SIMPLE_HEAVY, header_style="bold cyan", pad_edge=False)
-        perf_table.add_column("#",            justify="right", style="dim", no_wrap=True)
-        perf_table.add_column("Mean Lat (s)", justify="right", no_wrap=True)
-        perf_table.add_column("P95 Lat (s)",  justify="right", no_wrap=True)
-        perf_table.add_column("Mean TPS",     justify="right", no_wrap=True)
-        perf_table.add_column("Agg TPS",      justify="right", no_wrap=True)
-        perf_table.add_column("Tokens",       justify="right", no_wrap=True)
-        perf_table.add_column("Wall (s)",     justify="right", no_wrap=True)
-        for idx, row in enumerate(rows):
-            perf_table.add_row(
-                str(idx + 1),
+                level,
                 hl(format_float(row["mean_latency_s"]), idx == best_lat),
                 hl(format_float(row["p95_latency_s"]),  idx == best_p95),
                 hl(format_float(row["mean_tps"]),       idx == best_mean_tps),
@@ -143,7 +132,7 @@ def print_rich_tables(results: list[dict], levels: list[str]):
                 str(row["total_tokens"] or "N/A"),
                 format_float(row["wall_clock_s"]),
             )
-        console.print(perf_table)
+        console.print(table)
         console.print(
             "  [dim]Green = best. "
             "Agg TPS = total_tokens / wall_clock across all concurrent requests.[/]\n"
@@ -222,7 +211,7 @@ def main():
 
     levels = all_concurrency_levels(results)
     if args.concurrency:
-        levels = [l for l in levels if l in args.concurrency]
+        levels = [lvl for lvl in levels if lvl in args.concurrency]
 
     if not levels:
         print("No matching concurrency levels found.", file=sys.stderr)

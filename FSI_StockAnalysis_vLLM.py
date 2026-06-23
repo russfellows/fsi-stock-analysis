@@ -6,15 +6,12 @@ Converted from Ollama to vLLM for enhanced performance on AMD GPU infrastructure
 
 import yfinance as yf
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import gradio as gr
 import time
-import re
 import requests
-import json
-from datetime import datetime, timedelta
-from typing import List, Dict, Tuple, Optional, Union
+from datetime import datetime
+from typing import List, Dict, Tuple, Union
 import warnings
 warnings.filterwarnings("ignore")
 

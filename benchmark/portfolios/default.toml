@@ -1,0 +1,35 @@
+# Default stock portfolio for benchmarking
+# Each [[stock]] entry is one test scenario run against the LLM.
+# To use: uv run benchmark/run_benchmark.py --portfolio benchmark/portfolios/default.toml
+
+[portfolio]
+name = "default"
+description = "Standard four-stock benchmark portfolio — H1 2024"
+
+[[stock]]
+name = "aapl_moderate"
+symbol = "AAPL"
+start_date = "2024-01-02"
+end_date = "2024-06-28"
+investor_type = "Moderate"
+
+[[stock]]
+name = "tsla_aggressive"
+symbol = "TSLA"
+start_date = "2024-01-02"
+end_date = "2024-06-28"
+investor_type = "Aggressive"
+
+[[stock]]
+name = "msft_conservative"
+symbol = "MSFT"
+start_date = "2024-01-02"
+end_date = "2024-06-28"
+investor_type = "Conservative"
+
+[[stock]]
+name = "nvda_day_trader"
+symbol = "NVDA"
+start_date = "2024-01-02"
+end_date = "2024-06-28"
+investor_type = "Day Trader"

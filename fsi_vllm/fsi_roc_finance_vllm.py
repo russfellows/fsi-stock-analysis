@@ -6,18 +6,15 @@ Advanced financial services implementation with AMD ROCm optimization
 
 import os
 import sys
-import asyncio
 import logging
 import warnings
 import pandas as pd
 import numpy as np
 import yfinance as yf
 import gradio as gr
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
-import json
+from datetime import datetime
+from typing import Dict, List, Tuple
 import plotly.graph_objects as go
-import plotly.express as px
 from plotly.subplots import make_subplots
 
 # Suppress warnings
@@ -1037,19 +1034,19 @@ def create_gradio_interface():
                 gpu_display = f"{gpu_info['name']}" + (f" ({gpu_info['memory']})" if gpu_info['memory'] != 'N/A' else "")
                 
                 with gr.Row():
-                    gpu_status = gr.Textbox(
+                    gpu_status = gr.Textbox(  # noqa: F841
                         label="GPU Acceleration",
                         value=gpu_display,
                         interactive=False,
                         scale=1
                     )
-                    vllm_status = gr.Textbox(
+                    vllm_status = gr.Textbox(  # noqa: F841
                         label="AI Engine", 
                         value="vLLM + MI300X" if VLLM_AVAILABLE and gpu_info['available'] else "Built-in Analysis Engine",
                         interactive=False,
                         scale=1
                     )
-                    rocm_features = gr.Textbox(
+                    rocm_features = gr.Textbox(  # noqa: F841
                         label="Acceleration",
                         value="ROCm HIP + Matrix Cores" if gpu_info['available'] and 'MI300X' in gpu_info['name'] else "PyTorch GPU" if gpu_info['available'] else "CPU Processing",
                         interactive=False,
