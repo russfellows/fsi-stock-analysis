@@ -1,0 +1,17 @@
+# Benchmark suite execution parameters
+# Controls how many runs to perform and at what concurrency levels.
+# To use: uv run benchmark/run_benchmark.py --suite benchmark/suite.toml
+
+[suite]
+name = "standard"
+description = "Standard FSI benchmark suite"
+
+# Number of throwaway warm-up iterations before timing begins.
+warmup_runs = 1
+
+# Number of timed runs per scenario per concurrency level.
+timed_runs = 3
+
+# Concurrency levels to sweep. Each level runs all scenarios simultaneously
+# with N concurrent requests, measuring aggregate throughput.
+concurrency_levels = [1, 4, 8]

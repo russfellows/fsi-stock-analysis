@@ -7,7 +7,8 @@ different concurrency levels, saving results as JSON for later comparison.
 
 Usage:
     uv run benchmark/run_benchmark.py
-    uv run benchmark/run_benchmark.py --concurrency 1 4 --runs 5
+    uv run benchmark/run_benchmark.py --portfolio benchmark/portfolios/tech_stocks.toml
+    uv run benchmark/run_benchmark.py --suite benchmark/suite.toml --concurrency 1 4 --runs 5
     uv run benchmark/run_benchmark.py --scenarios aapl_moderate tsla_aggressive
     uv run benchmark/run_benchmark.py --output-dir /tmp/bench_results
 """
@@ -34,7 +35,7 @@ _PROJECT_DIR = _BENCH_DIR.parent
 # Add project root to sys.path so fsi_core can be imported
 sys.path.insert(0, str(_PROJECT_DIR))
 
-import fsi_core
+import fsi_core  # noqa: E402
 
 
 def load_config():
@@ -43,10 +44,18 @@ def load_config():
         return tomllib.load(f)
 
 
-def load_scenarios():
-    scenarios_path = _BENCH_DIR / "scenarios.toml"
-    with open(scenarios_path, "rb") as f:
-        return tomllib.load(f)
+def load_portfolio(path: Path) -> list[dict]:
+    """Load stock scenarios from a portfolio TOML file (key: [[stock]])."""
+    with open(path, "rb") as f:
+        data = tomllib.load(f)
+    return data.get("stock", [])
+
+
+def load_suite(path: Path) -> dict:
+    """Load suite execution params from a suite TOML file (key: [suite])."""
+    with open(path, "rb") as f:
+        data = tomllib.load(f)
+    return data.get("suite", {})
 
 
 def slugify(s: str) -> str:
@@ -323,10 +332,22 @@ def parse_args():
         description="FSI LLM benchmark runner — measures latency and throughput."
     )
     parser.add_argument(
+        "--portfolio",
+        default=str(_BENCH_DIR / "portfolios" / "default.toml"),
+        metavar="FILE",
+        help="Portfolio TOML file listing stocks to analyze (default: portfolios/default.toml)",
+    )
+    parser.add_argument(
+        "--suite",
+        default=str(_BENCH_DIR / "suite.toml"),
+        metavar="FILE",
+        help="Suite TOML file with execution params (default: suite.toml)",
+    )
+    parser.add_argument(
         "--scenarios",
         nargs="+",
         metavar="NAME",
-        help="Subset of scenario names to run (default: all)",
+        help="Subset of scenario names from the portfolio to run (default: all)",
     )
     parser.add_argument(
         "--output-dir",
@@ -338,13 +359,13 @@ def parse_args():
         nargs="+",
         type=int,
         metavar="N",
-        help="Override concurrency levels from scenarios.toml",
+        help="Override concurrency levels from suite.toml",
     )
     parser.add_argument(
         "--runs",
         type=int,
         metavar="N",
-        help="Override timed_runs from scenarios.toml",
+        help="Override timed_runs from suite.toml",
     )
     return parser.parse_args()
 
@@ -353,36 +374,40 @@ async def main():
     args = parse_args()
 
     cfg = load_config()
-    scenarios_cfg = load_scenarios()
+    suite = load_suite(Path(args.suite))
+    all_scenarios = load_portfolio(Path(args.portfolio))
 
-    suite = scenarios_cfg["suite"]
-    all_scenarios = scenarios_cfg["scenarios"]
+    if not all_scenarios:
+        print(f"ERROR: No stocks found in portfolio: {args.portfolio}", file=sys.stderr)
+        sys.exit(1)
 
     # Apply CLI overrides
-    warmup_runs = suite["warmup_runs"]
-    timed_runs = args.runs if args.runs is not None else suite["timed_runs"]
-    concurrency_levels = args.concurrency if args.concurrency else suite["concurrency_levels"]
+    warmup_runs = suite.get("warmup_runs", 1)
+    timed_runs = args.runs if args.runs is not None else suite.get("timed_runs", 3)
+    concurrency_levels = args.concurrency if args.concurrency else suite.get("concurrency_levels", [1])
 
-    # Filter scenarios
+    # Filter by name if --scenarios supplied
     if args.scenarios:
         all_scenarios = [sc for sc in all_scenarios if sc["name"] in args.scenarios]
         if not all_scenarios:
-            print(f"ERROR: No scenarios matched: {args.scenarios}")
+            print(f"ERROR: No scenarios matched: {args.scenarios}", file=sys.stderr)
             sys.exit(1)
 
     output_dir = Path(args.output_dir)
     llm_cfg = cfg["llm"]
     runtime = llm_cfg["runtime"]
     model = llm_cfg["ollama_model"] if runtime == "ollama" else llm_cfg["hf_model"]
+    suite_name = suite.get("name", "custom")
 
     run_id = build_run_id()
     timestamp = datetime.now().isoformat(timespec="seconds")
 
     print("=" * 60)
-    print(f"FSI LLM Benchmark — {suite['name']}")
+    print(f"FSI LLM Benchmark — {suite_name}")
     print(f"Run ID:      {run_id}")
     print(f"Runtime:     {runtime}")
     print(f"Model:       {model}")
+    print(f"Portfolio:   {args.portfolio}")
     print(f"Scenarios:   {[sc['name'] for sc in all_scenarios]}")
     print(f"Concurrency: {concurrency_levels}")
     print(f"Timed runs:  {timed_runs}  Warmup runs: {warmup_runs}")
@@ -413,7 +438,8 @@ async def main():
             "cpu_count": os.cpu_count(),
             "config_snapshot": cfg,
         },
-        "suite": suite["name"],
+        "suite": suite_name,
+        "portfolio": args.portfolio,
         "scenarios_run": [sc["name"] for sc in all_scenarios],
         "concurrency_results": concurrency_results,
     }

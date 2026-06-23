@@ -126,7 +126,7 @@ def get_stock_data(symbol, start_date, end_date):
         data = stock.history(start=start, end=end_adjusted)
         data = data.loc[start_date:end_date]
         return data
-    except Exception as e:
+    except Exception:
         return pd.DataFrame()
 
 def get_technical_indicators(data):
@@ -209,9 +209,9 @@ def get_news_headlines(symbol, max_headlines=5):
             print(f"Fallback info failed: {e}")
             headlines = [
                 f"- No recent news headlines available for {symbol}",
-                f"- Consider checking financial news websites for latest updates",
-                f"- Market analysis based on technical indicators recommended",
-                f"- General market conditions may affect stock performance"
+                "- Consider checking financial news websites for latest updates",
+                "- Market analysis based on technical indicators recommended",
+                "- General market conditions may affect stock performance"
             ]
     
     return '\n'.join(headlines[:max_headlines])
@@ -371,7 +371,7 @@ def gradio_interface(symbols, start_date, end_date, investor_type):
         all_inference_times.append(f"[{symbol}] LLM Inference Time: {pm.get('inference_time', 'N/A')}")
         all_token_counts.append(f"[{symbol}] Token Count: {pm.get('token_count', 'N/A')}")
         all_data_points.append(f"[{symbol}] Data Points: {pm.get('data_points', 'N/A')}")
-    print(f"\n🕒 User-selected date range:")
+    print("\n🕒 User-selected date range:")
     print(f"   Start Date: {start_date}")
     print(f"   End Date:   {end_date}")
     print(f"   Investor Type: {investor_type}")
@@ -558,7 +558,7 @@ def create_interface():
                 gr.Markdown("#### 📅 Date Selection")
                 with gr.Row():
                     with gr.Column():
-                        start_date_calendar = gr.HTML("""
+                        gr.HTML("""
                         <label style='font-weight: 600; margin-bottom: 8px; display: block;'>Start Date</label>
                         <input type="date" id="start_date_calendar" 
                             value="2024-08-13"
@@ -569,7 +569,7 @@ def create_interface():
                         """)
 
                     with gr.Column():
-                        end_date_calendar = gr.HTML("""
+                        gr.HTML("""
                         <label style='font-weight: 600; margin-bottom: 8px; display: block;'>End Date</label>
                         <input type="date" id="end_date_calendar"
                             value="2025-08-13"
